@@ -4,30 +4,42 @@ import algos
 import sound
 import Tkinter as tk
 import sys
+import time
 
-master = tk.Tk()
-width = 1000
-height = 1000
+class App(object):
+  def __init__(self, master):
+    self.master = master
+    self.canvas = tk.Canvas(self.master, width=1200, height=900, bg='black')
+    self.canvas.pack()
+    self.arr = sort_array.Canvas_Array(self.master, self.canvas, int(sys.argv[1]), int(sys.argv[2]))
+    self.canvas.pack()
+    for k, v in self.arr.__dict__.items():
+      print (k, v)
+    self.master.after(3000, self.test)
+    print "after"
+    
+  def test(self):
+    self.bubs = Bubble_Sort(self.master, self.arr)
 
-w = tk.Canvas(master, bg = "black", width=width, height=height)
-w.pack()
+root = tk.Tk()
+app = App(root)
+root.mainloop()
 
-L = w.create_text((0,0), anchor="nw", fill="white", text="Width: " + str(width) + " Height: " + str(height))
 
-test = sort_array.Canvas_Array(w, int(sys.argv[1]))
-for k, v in test.__dict__.items():
-  print (k, v)
-# array = []
 
-# for i in range(100):
-# 	x = 12 * i
-# 	y = chg_height(x + 12)
-#  	array.append((x + 1, 900-y, x + 13, 901 , i))
-#  	if i == 100:
-#  		print str(x+12)
 
-# for bar in array:
-# 	w.create_rectangle(bar[0], bar[1], bar[2], bar[3], fill="white")
-# master.after
 
-tk.mainloop()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
