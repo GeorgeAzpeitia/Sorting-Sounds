@@ -35,18 +35,30 @@ class Canvas_Array(object):
 
     self.bar_width = (float(self.width) - (self.size - 1) * self.bar_spacer_width) / self.size 
     self.bar_slope = float(self.height) / float(self.width)
+
     vals = []
     if self.config.arr_few_unique.get():
       uniq = 4
       for i in range(1, uniq):
-        vals = vals + [i * (self.size // (uniq - 1))] * (self.size // (uniq- 1))
+        vals = vals + [int(i * (float(self.size) / (uniq - 1)))] * (self.size // (uniq- 1))
       vals = vals + [self.size] * (self.size % (uniq- 1))
       assert len(vals) == (self.size)
     else:
       vals = range(self.size)
 
     if self.config.arr_sorting.get() == 0:
-        random.shuffle(vals)
+      #array is randomized      
+      random.shuffle(vals)
+    elif self.config.arr_sorting.get() == 1:
+      #array is reverse ordered
+      vals.reverse()
+    elif self.config.arr_sorting.get() == 3:
+      #array is almost sorted
+      for i in range(int(math.ceil(self.size * 0.125))):
+        i = random.randrange(0, self.size)
+        j = random.randrange(0, self.size)
+        vals[i], vals[j] = vals[j], vals[i]
+
     self.bar_array = []
    #bar_width should never be < 1
     if self.bar_width <= 1:

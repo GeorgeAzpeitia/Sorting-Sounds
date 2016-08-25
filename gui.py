@@ -23,9 +23,10 @@ class Config(object):
     self.algorithm.set(self.algorithms[0])
     self.delay = tk.IntVar()
     self.delay.set(10)
-    self.paused = True
-    self.step = False
+    self.first_run = True
+    self.paused = False
     self.running = False
+    self.last_inst = None
 
 class App(object):
   def __init__(self, master):
@@ -33,6 +34,7 @@ class App(object):
     self.canvas = tk.Canvas(self.master, width=config.width, height=config.height, bg='black')
     self.canvas.pack(side='left', fill='both', expand='YES')
     self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
+    self.algo = algos.Bubble_Sort(self.master, self.arr, config)
 
     tk.Label(self.master, text="Sorting Sounds").pack(pady=10)
     self.arr_ctl = tk.LabelFrame(self.master, text='Array Controls', padx=5, pady=5)
@@ -122,32 +124,57 @@ class App(object):
     # self.master.after(500, self.test)
 
   def pause(self):
-    config.pause = True
-    config.running = False
+    if config.running:
+      self.master.after_cancel(config.last_inst)
+      config.running = False
+      config.paused = True
 
   def step(self):
-    self.pause()
-    config.step = True
-    self.run()
+    if config.running:
+      self.pause()
+    if config.first_run:
+      config.paused = True
+      config.first_run = False
+      self.algo = algos.Bubble_Sort(self.master, self.arr, config)
+      self.algo.begin()
+    elif not self.algo.finished:
+      self.algo.step()
+
 
   def generate(self):
-
-    self.canvas.delete('all')
-    x = config.arr_size.get()
-    self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
+    if not config.running:
+      self.canvas.delete('all')
+      config.first_run = True
+      self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
+    else:
+      self.pause()
+      self.generate()
 
   def run(self):
-    print config.running
-    if(not config.running):
-      self.algo = algos.Bubble_Sort(self.master, self.arr, config)
+    if not config.running:
       config.running = True
-      self.algo.begin()
+      config.paused = False
+      if config.first_run:
+        config.first_run = False
+        self.algo = algos.Bubble_Sort(self.master, self.arr, config)
+        self.algo.begin()
+      else:
+        if self.algo.finished:
+          self.generate()
+          self.run()
+        else:
+          self.algo.step()
+  
+
+      
     
   def test(self):
     self.bubs = algos.Selection_Sort(self.master, self.arr)
     self.bubs.begin()
     for k, v in self.arr.__dict__.items():
       print (k, v)
+
+
 root = tk.Tk()
 config = Config()
 root.minsize(config.width, config.height)

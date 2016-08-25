@@ -14,31 +14,40 @@ class Bubble_Sort(object):
     self.arr.algo_name = self.name
     self.arr.updatestats()
     self.finished = False
+    self.swapping = False
 
     self.i = 0
     self.j = 0
     self.n = self.arr.size - 1
 
-  def begin(self):
-    self.master.after(0, self.step)
-
   def step(self):
-    self.arr.compared(self.j, self.j + 1)
-    if self.arr.val(self.j) > self.arr.val(self.j + 1):
-      self.arr.swap(self.j, self.j + 1)
-    self.j += 1
-    if self.j >= self.n:
-      self.j = 0
-      self.n -= 1
-      self.i += 1
+    if not self.swapping:
+      self.arr.compared(self.j, self.j + 1)
+      if self.arr.val(self.j) > self.arr.val(self.j + 1):
+        self.swapping = True
+    else:
+        self.arr.swap(self.j, self.j + 1)
+        self.swapping = False
+
+    if not self.swapping: 
+      self.j += 1
+      if self.j >= self.n:
+        self.j = 0
+        self.n -= 1
+        self.i += 1
+
     if self.i <= self.arr.size - 1:
-      self.master.after(self.config.delay.get(), self.step)
+      if not self.config.paused:
+        self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
+      self.config.running = False
       print 'done'
-      # self.master.after(5000, sys.exit)
+
+  def begin(self):
+    self.step()
 
 class Selection_Sort(object):
   """docstring for Selection_Sort"""
@@ -56,7 +65,7 @@ class Selection_Sort(object):
     self.n = self.arr.size
 
   def begin(self):
-    self.master.after(0, self.step)
+    self.config.last_inst = self.master.after(0, self.step)
 
   def step(self):
     self.arr.compared(self.min_idx, self.j)
@@ -69,7 +78,7 @@ class Selection_Sort(object):
       self.min_idx = self.sorted_idx
       self.j = self.min_idx + 1
     if self.sorted_idx != self.n - 1:
-      self.master.after(self.config.delay.get(), self.step)
+      self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
       self.arr.clear_compared()
       self.finished = True
@@ -111,7 +120,7 @@ class Merge_Sort(object):
     self.arr = arr
 
   def begin(self):
-    self.master.after(0, self.step)
+    self.config.last_inst = self.master.after(0, self.step)
 
   def step(self):
     pass
