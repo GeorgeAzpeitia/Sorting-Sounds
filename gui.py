@@ -3,8 +3,11 @@ import sort_array
 import algos
 import sound
 import Tkinter as tk
+import ttk
 import sys
 import time
+import colors
+import pyaudio
 
 class Config(object):
   """docstring for Config"""
@@ -15,23 +18,42 @@ class Config(object):
     self.arr_size.set(10)
     self.arr_sorting = tk.IntVar()
     self.arr_few_unique = tk.IntVar()
-    self.colors = ['white', 'rainbow']
+    self.colors = colors._keys
+    self.colors_dict = colors._dict
     self.color_scheme = tk.StringVar()
     self.color_scheme.set(self.colors[0])
-    self.algorithms = ['Bubble Sort', 'Selection Sort']
+    self.algorithms = {
+                      'Bubble Sort'     : algos.Bubble_Sort, 
+                      'Selection Sort'  : algos.Selection_Sort,
+                      'Cocktail Sort'   : algos.Cocktail_Sort,
+                      'Insertion Sort'  : algos.Insertion_Sort,
+                      'Heap Sort'       : algos.Heap_Sort,
+                      'Merge Sort'      : algos.Merge_Sort,
+                      'Quick Sort'      : algos.Quick_Sort,
+                      'Shell Sort'      : algos.Shell_Sort,
+                      'Radix Sort'      : algos.Radix_Sort
+                      }
+    #alg_keys is used purely because I wanted to preserve this particular or of algos in the option menu
+    self.alg_keys = [
+                    'Bubble Sort', 'Selection Sort', 'Cocktail Sort', 
+                    'Insertion Sort', 'Heap Sort', 'Merge Sort', 'Quick Sort',
+                    'Shell Sort', 'Radix Sort'
+                    ]
     self.algorithm = tk.StringVar()
-    self.algorithm.set(self.algorithms[0])
+
+    self.algorithm.set('Bubble Sort')
     self.delay = tk.IntVar()
     self.delay.set(10)
     self.first_run = True
     self.paused = False
     self.running = False
+    self.done_checking_sort = False
     self.last_inst = None
 
 class App(object):
   def __init__(self, master):
     self.master = master
-    self.canvas = tk.Canvas(self.master, width=config.width, height=config.height, bg='black')
+    self.canvas = tk.Canvas(self.master, width=config.width, height=config.height, bg=config.colors_dict[config.color_scheme.get()][-1])
     self.canvas.pack(side='left', fill='both', expand='YES')
     self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
     self.algo = algos.Bubble_Sort(self.master, self.arr, config)
@@ -89,7 +111,7 @@ class App(object):
     self.algo_ctl.pack(padx=10, fill='x')
 
     tk.Label(self.algo_ctl, text='Sorting Algorithm').pack(pady=3, anchor='w')
-    self.alg_opt = tk.OptionMenu(self.algo_ctl, config.algorithm, *config.algorithms)
+    self.alg_opt = tk.OptionMenu(self.algo_ctl, config.algorithm, *config.alg_keys)
     self.alg_opt.pack(anchor='w', fill='x')
 
     self.alg_delay_frame = tk.Frame(self.algo_ctl)
@@ -125,7 +147,9 @@ class App(object):
 
   def pause(self):
     if config.running:
+     
       self.master.after_cancel(config.last_inst)
+      
       config.running = False
       config.paused = True
 
@@ -135,8 +159,8 @@ class App(object):
     if config.first_run:
       config.paused = True
       config.first_run = False
-      self.algo = algos.Bubble_Sort(self.master, self.arr, config)
-      self.algo.begin()
+      self.algo = config.algorithms[config.algorithm.get()](self.master, self.arr, config)
+      self.algo.step()
     elif not self.algo.finished:
       self.algo.step()
 
@@ -145,37 +169,46 @@ class App(object):
     if not config.running:
       self.canvas.delete('all')
       config.first_run = True
+      self.canvas.config(bg=config.colors_dict[config.color_scheme.get()][-1])
       self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
+      self.algo = config.algorithms[config.algorithm.get()](self.master, self.arr, config)
     else:
       self.pause()
       self.generate()
 
   def run(self):
     if not config.running:
-      config.running = True
-      config.paused = False
       if config.first_run:
         config.first_run = False
-        self.algo = algos.Bubble_Sort(self.master, self.arr, config)
-        self.algo.begin()
+        config.done_checking_sort = False
+        self.algo = config.algorithms[config.algorithm.get()](self.master, self.arr, config)
+        config.running = True
+        config.paused = False
+        self.algo.step()
       else:
         if self.algo.finished:
           self.generate()
           self.run()
         else:
+          config.running = True
+          config.paused = False
           self.algo.step()
+        
   
 
       
     
   def test(self):
     self.bubs = algos.Selection_Sort(self.master, self.arr)
-    self.bubs.begin()
+    self.bubs.step()
     for k, v in self.arr.__dict__.items():
       print (k, v)
 
 
 root = tk.Tk()
+root.style = ttk.Style()
+root.style.theme_use("clam")
+
 config = Config()
 root.minsize(config.width, config.height)
 app = App(root)
