@@ -61,7 +61,6 @@ class Canvas_Array(object):
         i = random.randrange(0, self.size)
         j = random.randrange(0, self.size)
         vals[i], vals[j] = vals[j], vals[i]
-   #bar_width should never be < 1
     if self.bar_width <= 1:
       x0 = 0
       x1 = 0
@@ -73,7 +72,6 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_line(x0, y0, x1, y1, fill=color, tags=color)))
         x0 += 1
         x1 += 1
-
     else:
       x0 = 0
       x1 = self.bar_width
@@ -84,7 +82,12 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, tags=color, width=0)))
         x0 = x1 + self.bar_spacer_width
         x1 = x0 + self.bar_width
-
+        
+  def get_y(self, val):
+    if self.bar_width <= 1:
+      return self.height - (val * self.bar_slope)
+    else:
+      return self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
   def updatestats(self):
     stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get())
     self.canvas.itemconfig(self.statlabel, text=stats)

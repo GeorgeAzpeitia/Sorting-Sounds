@@ -333,6 +333,149 @@ class Merge_Sort(object):
     self.arr.algo_name = 'Merge Sort'
     self.arr.updatestats()
 
+    self.backing_arr = [None] * self.arr.size
+    self.call_stack = [(0, (self.arr.size -1) / 2, self.arr.size - 1)]
+    self.last_right = None
+    self.splitting = True
+    self.merging = False
+    self.copying = False
+    self.merge_left = None
+    self.merge_mid = None
+    self.merge_right = None
+    self.merge_i = None
+    self.merge_j = None
+    self.merge_k = None
+
+  def merge(self):
+
+    if self.merge_i <= self.merge_mid and self.merge_j <= self.merge_right:
+      self.arr.compared(self.merge_i, self.merge_j)
+      if self.arr.val(self.merge_i) < self.arr.val(self.merge_j):
+        self.backing_arr[self.merge_k] = self.arr.val(self.merge_i)
+        self.merge_i += 1
+        self.merge_k += 1
+      else:
+        self.backing_arr[self.merge_k] = self.arr.val(self.merge_j)
+        self.merge_j += 1
+        self.merge_k += 1
+    elif self.merge_j > self.merge_right and self.merge_k <= self.merge_right:
+      self.backing_arr[self.merge_k] = self.arr.val(self.merge_i)
+      self.merge_i += 1
+      self.merge_k += 1
+    elif self.merge_i > self.merge_mid and self.merge_k <= self.merge_right:
+      self.backing_arr[self.merge_k] = self.arr.val(self.merge_j)
+      self.merge_j += 1
+      self.merge_k += 1
+    else:
+      self.last_right = self.merge_right
+      self.merge_k = self.merge_left
+      self.arr.clear_compared()
+      self.merging = False
+      self.copying = True
+      self.copy()
+
+  def copy(self):
+    if self.merge_k <= self.merge_right:
+
+      new_val = self.backing_arr[self.merge_k]
+      self.backing_arr[self.merge_k] = None
+      new_y = self.arr.get_y(new_val)
+      rec = self.arr.rec(self.merge_k)
+      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
+      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
+      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
+      self.arr.revert_color(self.merge_k)
+      self.arr.bar_array[self.merge_k] = (new_val, rec)
+
+      self.merge_k += 1
+      self.arr.swaps += 1
+      self.arr.updatestats()
+    else:
+      self.copying = False
+      self.splitting = True
+      self.split()
+
+  def split_left(self):
+    l = self.call_stack[-1][0]
+    r = self.call_stack[-1][1]
+    mid = (l + r) / 2
+    self.call_stack.append((l, mid, r))
+
+  def split_right(self):
+    l = self.call_stack[-1][1] + 1
+    r = self.call_stack[-1][2]
+    mid = (l + r) / 2
+    self.call_stack.append((l, mid, r))
+
+  def split(self):
+    if len(self.call_stack) == 0:
+      self.finished = True
+      return
+    l = self.call_stack[-1][0]
+    mid = self.call_stack[-1][1]
+    r = self.call_stack[-1][2]
+
+    if r - l == 0 or r - l == 1:
+      self.merge_left = l
+      self.merge_mid = mid
+      self.merge_right = r
+      self.merge_i = l
+      self.merge_k = l
+      self.merge_j = mid + 1
+      self.call_stack.pop()
+      self.splitting = False
+      self.merging = True
+      self.merge()
+      #pop and merge
+
+    elif self.last_right == r:
+      #pop and merge
+      self.merge_left = l
+      self.merge_mid = mid
+      self.merge_right = r
+      self.merge_i = l
+      self.merge_k = l
+      self.merge_j = mid + 1
+      self.call_stack.pop()
+      self.splitting = False
+      self.merging = True
+      self.merge()
+    elif self.last_right == mid:
+      #split right
+      self.split_right()
+    else:
+      self.split_left()
+      #split left
+
+  def step(self):
+    if self.splitting:
+      self.split()
+    elif self.merging:
+      self.merge()
+    elif self.copying:
+      self.copy()
+    else:
+      self.finished = True
+
+    if not self.finished:
+      if not self.config.paused:
+        self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
+    else:
+      self.arr.clear_compared()
+      self.arr.check_sorted()
+      self.finished = True
+
+class Merge_Sort_Iter(object):
+  """docstring for Selection_Sort"""
+  def __init__(self, master, arr, config):
+    self.master = master
+    self.arr = arr
+    self.config = config
+    self.finished = False
+    self.swapping = False
+    self.arr.algo_name = 'Merge Sort'
+    self.arr.updatestats()
+
   def step(self):
 
     if False:
@@ -342,8 +485,6 @@ class Merge_Sort(object):
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
-      self.config.running = False
-
 
 class Quick_Sort(object):
   """docstring for Selection_Sort"""

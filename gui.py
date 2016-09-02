@@ -23,15 +23,16 @@ class Config(object):
     self.color_scheme = tk.StringVar()
     self.color_scheme.set(self.colors[0])
     self.algorithms = {
-                      'Bubble Sort'     : algos.Bubble_Sort, 
-                      'Selection Sort'  : algos.Selection_Sort,
-                      'Cocktail Sort'   : algos.Cocktail_Sort,
-                      'Insertion Sort'  : algos.Insertion_Sort,
-                      'Heap Sort'       : algos.Heap_Sort,
-                      'Merge Sort'      : algos.Merge_Sort,
-                      'Quick Sort'      : algos.Quick_Sort,
-                      'Shell Sort'      : algos.Shell_Sort,
-                      'Radix Sort'      : algos.Radix_Sort
+                      'Bubble Sort'             : algos.Bubble_Sort, 
+                      'Selection Sort'          : algos.Selection_Sort,
+                      'Cocktail Sort'           : algos.Cocktail_Sort,
+                      'Insertion Sort'          : algos.Insertion_Sort,
+                      'Heap Sort'               : algos.Heap_Sort,
+                      'Merge Sort'              : algos.Merge_Sort,
+                      'Merge Sort (Iterative)'  : algos.Merge_Sort_Iter,
+                      'Quick Sort'              : algos.Quick_Sort,
+                      'Shell Sort'              : algos.Shell_Sort,
+                      'Radix Sort'              : algos.Radix_Sort
                       }
     #alg_keys is used purely because I wanted to preserve this particular or of algos in the option menu
     self.alg_keys = [
