@@ -21,6 +21,7 @@ class Canvas_Array(object):
     self.comparisons = 0
     self.swaps = 0
     self.algo_name = None
+    self.graph_mode = self.config.graph_mode.get()
     self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
     #Temporary solution until I figure out how to display an array with more elements
     #than the width of the window
@@ -35,7 +36,7 @@ class Canvas_Array(object):
       self.bar_spacer_width = math.ceil(self.bar_width * Canvas_Array.spacer_ratio)
 
     self.bar_width = (float(self.width) - (self.size - 1) * self.bar_spacer_width) / self.size 
-    self.bar_slope = float(self.height) / float(self.width)
+    self.bar_slope = float(self.height - 50) / float(self.width)
     self.Build_Bars()
 
   def Build_Bars(self):
@@ -43,8 +44,8 @@ class Canvas_Array(object):
     if self.config.arr_few_unique.get():
       uniq = 4
       for i in range(1, uniq):
-        vals = vals + [int(i * (float(self.size) / (uniq - 1)))] * (self.size // (uniq- 1))
-      vals = vals + [self.size] * (self.size % (uniq- 1))
+        vals = vals + [int(i * (float(self.size - 1) / (uniq - 1)))] * (self.size // (uniq- 1))
+      vals = vals + [self.size - 1] * (self.size % (uniq- 1))
       assert len(vals) == (self.size)
     else:
       vals = range(self.size)
@@ -61,7 +62,22 @@ class Canvas_Array(object):
         i = random.randrange(0, self.size)
         j = random.randrange(0, self.size)
         vals[i], vals[j] = vals[j], vals[i]
-    if self.bar_width <= 1:
+    if self.graph_mode:
+      x_bar_left = 0
+      x_bar_right = self.bar_width
+      self.radius = 15 - (self.size // 100)
+      for val in vals:
+        x_center = float(x_bar_left + x_bar_right) / 2
+        y0 = self.height - self.radius - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
+        x0 = x_center - self.radius
+        x1 = x_center + self.radius
+        y1 = y0 + 2 * self.radius 
+        color = self.get_color(val)
+        self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
+        x_bar_left = x_bar_right + self.bar_spacer_width
+        x_bar_right = x_bar_left + self.bar_width
+
+    elif self.bar_width <= 1:
       x0 = 0
       x1 = 0
       y1 = self.height - 1
@@ -82,7 +98,7 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, tags=color, width=0)))
         x0 = x1 + self.bar_spacer_width
         x1 = x0 + self.bar_width
-        
+
   def get_y(self, val):
     if self.bar_width <= 1:
       return self.height - (val * self.bar_slope)
@@ -129,6 +145,9 @@ class Canvas_Array(object):
 
   def compared(self, *args):
     """colors two bars red to show they're being compared"""
+    for arg in args:
+      self.config.sound.sound_access(self.val(arg))
+      
     args = map(self.rec, args)
       
     for i in range(len(self.last_compared) - 1, -1, -1):
@@ -138,6 +157,7 @@ class Canvas_Array(object):
         self.last_compared.pop(i)
 
     for arg in args:
+      self.canvas.tag_raise(arg)
       self.rec_chg_color(arg, self.color_scheme[-2])
       if arg not in self.last_compared:
         self.last_compared.append(arg)
@@ -157,6 +177,7 @@ class Canvas_Array(object):
       if(self.val(self.sorted_check_i) <= self.val(self.sorted_check_j)):
         self.sorted_check_i += 1
         self.sorted_check_j += 1
+        self.config.sound.sound_access(self.sorted_check_i)
         self.config.last_inst = self.master.after(self.config.delay.get(), self.check_sorted)
       else:
         pass # Maybe Implement something to deal with the error case in which the array is not sorted

@@ -8,12 +8,13 @@ import sys
 import time
 import colors
 import pyaudio
+import time
 
 class Config(object):
   """docstring for Config"""
   def __init__(self):
     self.width = 1200
-    self.height = 900
+    self.height = 940
     self.arr_size = tk.IntVar()
     self.arr_size.set(10)
     self.arr_sorting = tk.IntVar()
@@ -22,6 +23,7 @@ class Config(object):
     self.colors_dict = colors._dict
     self.color_scheme = tk.StringVar()
     self.color_scheme.set(self.colors[0])
+    self.graph_mode = tk.IntVar()
     self.algorithms = {
                       'Bubble Sort'             : algos.Bubble_Sort, 
                       'Selection Sort'          : algos.Selection_Sort,
@@ -37,8 +39,8 @@ class Config(object):
     #alg_keys is used purely because I wanted to preserve this particular or of algos in the option menu
     self.alg_keys = [
                     'Bubble Sort', 'Selection Sort', 'Cocktail Sort', 
-                    'Insertion Sort', 'Heap Sort', 'Merge Sort', 'Quick Sort',
-                    'Shell Sort', 'Radix Sort'
+                    'Insertion Sort', 'Heap Sort', 'Merge Sort', 'Merge Sort (Iterative)', 
+                    'Quick Sort', 'Shell Sort', 'Radix Sort'
                     ]
     self.algorithm = tk.StringVar()
 
@@ -50,6 +52,9 @@ class Config(object):
     self.running = False
     self.done_checking_sort = False
     self.last_inst = None
+    self.sound = None
+    self.sound_on = tk.IntVar()
+    
 
 class App(object):
   def __init__(self, master):
@@ -58,6 +63,14 @@ class App(object):
     self.canvas.pack(side='left', fill='both', expand='YES')
     self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
     self.algo = algos.Bubble_Sort(self.master, self.arr, config)
+    config.sound = sound.s(self.arr, config)
+    sound.sound_on = False
+    #Sound
+    self.p = pyaudio.PyAudio()
+    self.stream = self.p.open(format=pyaudio.paInt16,
+                    channels=1, rate=44100,
+                    output=True, stream_callback=config.sound.sound_callback)
+    self.stream.start_stream()
 
     tk.Label(self.master, text="Sorting Sounds").pack(pady=10)
     self.arr_ctl = tk.LabelFrame(self.master, text='Array Controls', padx=5, pady=5)
@@ -101,13 +114,21 @@ class App(object):
     self.arr_radio_almost.grid(row=1, column=1, sticky='w')
     self.arr_check_few_uniq = tk.Checkbutton(self.arr_sorting_ctl, text='Few Unique', variable=config.arr_few_unique)
     self.arr_check_few_uniq.grid(row=2, column=0, sticky='w')
-
     self.arr_colors_frame = tk.Frame(self.arr_ctl)
-    self.arr_colors_frame.pack(side='left', pady=5)
+
+    self.arr_colors_frame.pack(fill='x', pady=5)
     tk.Label(self.arr_colors_frame, text='Color Scheme ').pack(side='left')
     self.arr_opt_colors = tk.OptionMenu(self.arr_colors_frame, config.color_scheme, *config.colors)
     self.arr_opt_colors.pack(side='left')
+    self.arr_graph = tk.Checkbutton(self.arr_ctl, text='Graph Mode', variable=config.graph_mode)
+    self.arr_graph.pack(side='left')
 
+    self.arr_graph = tk.Checkbutton(self.arr_ctl, text='Sound (Experimental)', variable=config.sound_on)
+    self.arr_graph.pack(side='left')
+
+    def change_sound(*args):
+      sound.sound_on = config.sound_on.get()
+    config.sound_on.trace('w', change_sound)
     self.algo_ctl = tk.LabelFrame(self.master, text='Algorithm Controls', pady=5, padx=5)
     self.algo_ctl.pack(padx=10, fill='x')
 
@@ -172,6 +193,7 @@ class App(object):
       config.first_run = True
       self.canvas.config(bg=config.colors_dict[config.color_scheme.get()][-1])
       self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
+      config.sound.arr = self.arr
       self.algo = config.algorithms[config.algorithm.get()](self.master, self.arr, config)
     else:
       self.pause()
@@ -194,16 +216,6 @@ class App(object):
           config.running = True
           config.paused = False
           self.algo.step()
-        
-  
-
-      
-    
-  def test(self):
-    self.bubs = algos.Selection_Sort(self.master, self.arr)
-    self.bubs.step()
-    for k, v in self.arr.__dict__.items():
-      print (k, v)
 
 
 root = tk.Tk()
@@ -214,6 +226,13 @@ config = Config()
 root.minsize(config.width, config.height)
 app = App(root)
 root.mainloop()
+
+config.sound.done = True
+while app.stream.is_active():
+    time.sleep(0.1)
+app.stream.stop_stream()
+app.stream.close()
+app.p.terminate()
 
 
 

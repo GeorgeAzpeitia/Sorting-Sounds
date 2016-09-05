@@ -1,4 +1,6 @@
 import math
+import pyaudio
+import numpy
 class Bubble_Sort(object):
   """A basic implementation of bubble sort.
      We have to use a step function to correctly
@@ -14,8 +16,7 @@ class Bubble_Sort(object):
     self.arr.updatestats()
     self.finished = False
     self.swapping = False
-    self.compare_cleared = False
-
+ 
     self.i = 0
     self.j = 0
     self.n = self.arr.size - 1
@@ -335,10 +336,14 @@ class Merge_Sort(object):
 
     self.backing_arr = [None] * self.arr.size
     self.call_stack = [(0, (self.arr.size -1) / 2, self.arr.size - 1)]
+
     self.last_right = None
     self.splitting = True
     self.merging = False
     self.copying = False
+    self.color_left = self.call_stack[0][0]
+    self.color_mid = self.call_stack[0][1]
+    self.color_right = self.call_stack[0][2]
     self.merge_left = None
     self.merge_mid = None
     self.merge_right = None
@@ -374,6 +379,8 @@ class Merge_Sort(object):
       self.copying = True
       self.copy()
 
+
+
   def copy(self):
     if self.merge_k <= self.merge_right:
 
@@ -382,6 +389,8 @@ class Merge_Sort(object):
       new_y = self.arr.get_y(new_val)
       rec = self.arr.rec(self.merge_k)
       x0, y0, x1, y1 = self.arr.canvas.coords(rec)
+      if self.arr.graph_mode:
+        y1 = new_y - 2 * self.arr.radius
       self.arr.canvas.coords(rec, x0, new_y, x1, y1)
       self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
       self.arr.revert_color(self.merge_k)
@@ -407,13 +416,30 @@ class Merge_Sort(object):
     mid = (l + r) / 2
     self.call_stack.append((l, mid, r))
 
+  def makeBounds(self, l, mid, r):
+
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_left), tags=self.arr.get_color(self.arr.val(self.color_left)))
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_mid), tags=self.arr.get_color(self.arr.val(self.color_mid)))
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_right), tags=self.arr.get_color(self.arr.val(self.color_right)))
+    self.arr.revert_color(self.color_left)
+    self.arr.revert_color(self.color_right)
+    self.arr.revert_color(self.color_mid)
+
+    self.color_left, self.color_mid, self.color_right = l, mid, r
+
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_left), tags='green')
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_mid), tags='blue')
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_right), tags='green')
+    self.arr.chg_color(self.color_left, 'green')
+    self.arr.chg_color(self.color_mid, 'blue')
+    self.arr.chg_color(self.color_right, 'green')
+
   def split(self):
     if len(self.call_stack) == 0:
       self.finished = True
       return
-    l = self.call_stack[-1][0]
-    mid = self.call_stack[-1][1]
-    r = self.call_stack[-1][2]
+    l, mid, r = self.call_stack[-1]
+    self.makeBounds(l, mid, r)
 
     if r - l == 0 or r - l == 1:
       self.merge_left = l
@@ -473,18 +499,131 @@ class Merge_Sort_Iter(object):
     self.config = config
     self.finished = False
     self.swapping = False
-    self.arr.algo_name = 'Merge Sort'
+    self.arr.algo_name = 'Merge Sort (Iterative)'
     self.arr.updatestats()
 
-  def step(self):
+    self.backing_arr = [None] * self.arr.size
+    self.merge_size = 1
+    self.splitting = True
+    self.merging = False
+    self.copying = False
+    self.color_left = 0
+    self.color_mid = 0
+    self.color_right = 0
+    self.merge_l_start = 0
+    self.merge_left = 0
+    self.merge_mid = None
+    self.merge_right = None
+    self.merge_i = None
+    self.merge_j = None
+    self.merge_k = None
 
-    if False:
+  def merge(self):
+    if self.merge_i <= self.merge_mid and self.merge_j <= self.merge_right:
+      self.arr.compared(self.merge_i, self.merge_j)
+      if self.arr.val(self.merge_i) < self.arr.val(self.merge_j):
+        self.backing_arr[self.merge_k] = self.arr.val(self.merge_i)
+        self.merge_i += 1
+        self.merge_k += 1
+      else:
+        self.backing_arr[self.merge_k] = self.arr.val(self.merge_j)
+        self.merge_j += 1
+        self.merge_k += 1
+    elif self.merge_j > self.merge_right and self.merge_k <= self.merge_right:
+      self.backing_arr[self.merge_k] = self.arr.val(self.merge_i)
+      self.merge_i += 1
+      self.merge_k += 1
+    elif self.merge_i > self.merge_mid and self.merge_k <= self.merge_right:
+      self.backing_arr[self.merge_k] = self.arr.val(self.merge_j)
+      self.merge_j += 1
+      self.merge_k += 1
+    else:
+      self.merge_k = self.merge_left
+      self.arr.clear_compared()
+      self.merging = False
+      self.copying = True
+      self.copy()
+
+
+
+  def copy(self):
+    if self.merge_k <= self.merge_right:
+      new_val = self.backing_arr[self.merge_k]
+      self.backing_arr[self.merge_k] = None
+      new_y = self.arr.get_y(new_val)
+      rec = self.arr.rec(self.merge_k)
+      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
+      if self.arr.graph_mode:
+        y1 = new_y - 2 * self.arr.radius
+      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
+      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
+      self.arr.revert_color(self.merge_k)
+      self.arr.bar_array[self.merge_k] = (new_val, rec)
+
+      self.merge_k += 1
+      self.arr.swaps += 1
+      self.arr.updatestats()
+    else:
+      self.copying = False
+      self.splitting = True
+      self.split()
+
+  def makeBounds(self, l, mid, r):
+
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_left), tags=self.arr.get_color(self.arr.val(self.color_left)))
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_mid), tags=self.arr.get_color(self.arr.val(self.color_mid)))
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_right), tags=self.arr.get_color(self.arr.val(self.color_right)))
+    self.arr.revert_color(self.color_left)
+    self.arr.revert_color(self.color_right)
+    self.arr.revert_color(self.color_mid)
+
+    self.color_left, self.color_mid, self.color_right = l, mid, r
+
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_mid), tags='blue')
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_left), tags='green')
+    self.arr.canvas.itemconfig(self.arr.rec(self.color_right), tags='green')
+    self.arr.chg_color(self.color_mid, 'blue')
+    self.arr.chg_color(self.color_left, 'green')
+    self.arr.chg_color(self.color_right, 'green')
+
+  def split(self):
+    if self.merge_size > self.arr.size - 1:
+      self.finished = True
+      return
+    self.merge_left = self.merge_l_start
+    self.merge_mid = min(self.merge_left + self.merge_size - 1, self.arr.size - 1)
+    self.merge_right = min(self.merge_left + (2 * self.merge_size) - 1, self.arr.size - 1)
+    self.makeBounds(self.merge_left, self.merge_mid, self.merge_right)
+    self.merge_i = self.merge_left
+    self.merge_j = self.merge_mid + 1
+    self.merge_k = self.merge_left
+
+    self.splitting = False
+    self.merging = True
+
+    self.merge_l_start += 2 * self.merge_size
+    if self.merge_l_start >= self.arr.size - 1:
+      self.merge_l_start = 0
+      self.merge_size *= 2
+
+  def step(self):
+    if self.splitting:
+      self.split()
+    elif self.merging:
+      self.merge()
+    elif self.copying:
+      self.copy()
+    else:
+      self.finished = True
+
+    if not self.finished:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
+
 
 class Quick_Sort(object):
   """docstring for Selection_Sort"""
@@ -497,9 +636,60 @@ class Quick_Sort(object):
     self.arr.algo_name = 'Quick Sort'
     self.arr.updatestats()
 
-  def step(self):
+    self.partitioning = True
+    self.part_swapping = False
+    self.call_stack = [(0, self.arr.size -1)]
+    self.part_left = -1
+    self.pivot = self.arr.size - 1
+    self.part_right = 0
 
-    if False:
+  def partition(self):
+    if self.part_right < self.pivot:
+      self.arr.compared(self.part_right, self.pivot)
+      if self.arr.val(self.part_right) <= self.arr.val(self.pivot):
+        self.part_left += 1
+        self.partitioning = False
+        self.part_swapping = True
+      else:
+        self.part_right += 1
+    else:
+      self.partitioning = False
+      self.swapping = True
+  def part_swap(self):
+    self.arr.swap(self.part_left, self.part_right)
+    self.part_right += 1
+    self.part_swapping = False
+    self.partitioning = True
+
+  def pivot_swap(self):
+    self.arr.swap(self.part_left + 1, self.pivot)
+    self.pivot = self.part_left + 1
+    last = self.call_stack.pop()
+    if self.pivot + 1 < last[1]:
+      self.call_stack.append((self.pivot + 1, last[1]))
+    if last[0] < self.pivot - 1:
+      self.call_stack.append((last[0], self.pivot - 1))
+    if len(self.call_stack) == 0:
+      self.finished = True
+      self.swapping = False
+      return
+    else:
+      self.swapping = False
+      self.partitioning = True
+      top = self.call_stack[-1]
+      self.part_left = top[0] - 1
+      self.pivot = top[1]
+      self.part_right = top[0]
+
+  def step(self):
+    if self.partitioning:
+      self.partition()
+    elif self.part_swapping:
+      self.part_swap()
+    elif self.swapping:
+      self.pivot_swap()
+
+    if not self.finished:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
