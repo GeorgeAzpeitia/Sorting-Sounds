@@ -220,6 +220,7 @@ class App(object):
 
 
 root = tk.Tk()
+root.wm_title("Sorting Sounds")
 root.style = ttk.Style()
 root.style.theme_use("clam")
 

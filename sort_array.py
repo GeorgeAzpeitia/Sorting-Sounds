@@ -22,6 +22,7 @@ class Canvas_Array(object):
     self.swaps = 0
     self.algo_name = None
     self.graph_mode = self.config.graph_mode.get()
+    self.spirals = False
     self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
     #Temporary solution until I figure out how to display an array with more elements
     #than the width of the window
@@ -77,6 +78,17 @@ class Canvas_Array(object):
         x_bar_left = x_bar_right + self.bar_spacer_width
         x_bar_right = x_bar_left + self.bar_width
 
+    elif self.spirals:
+      self.radius = 15 - (self.size // 100)
+      self.x_center = (self.width / 2)
+      self.y_center = self.height / 2
+      for i in range(len(vals)):
+        val = vals[i]
+        x0, y0, x1, y1 = self.translate(i, val)
+        # print (x, y)
+        color = self.get_color(val)
+        self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
+
     elif self.bar_width <= 1:
       x0 = 0
       x1 = 0
@@ -99,6 +111,17 @@ class Canvas_Array(object):
         x0 = x1 + self.bar_spacer_width
         x1 = x0 + self.bar_width
 
+  def translate(self, x, y):
+    """Takes in an array index x, and the value at that x and returns the bbox coords"""
+    x = float(x) / (self.size - 1)
+    y = self.height / 2 * (float(y) / (self.size - 1))  - 20
+    x, y = y * math.cos(2*math.pi*x), y * math.sin(2*math.pi*x)
+    x0 = self.x_center + x - self.radius
+    y0 = self.height - self.y_center + y - self.radius
+    x1 = self.x_center + x + self.radius
+    y1 = y0 + 2 * self.radius
+    return x0, y0, x1, y1
+
   def get_y(self, val):
     if self.bar_width <= 1:
       return self.height - (val * self.bar_slope)
@@ -116,6 +139,23 @@ class Canvas_Array(object):
     return self.color_scheme[x]
 
   def swap(self, i, j):
+    if self.spirals:
+      self.spiral_swap(i, j)
+    else:
+      self.bar_swap(i, j)
+  def spiral_swap(self, i, j):
+    i_val = self.val(i)
+    j_val = self.val(j)
+    i_x0, i_y0, i_x1, i_y1 = self.translate(j, i_val)
+    j_x0, j_y0, j_x1, j_y1 = self.translate(i, j_val)
+    self.canvas.coords(self.rec(i), i_x0, i_y0, i_x1, i_y1)
+    self.canvas.coords(self.rec(j), j_x0, j_y0, j_x1, j_y1)
+    self.bar_array[i], self.bar_array[j] = self.bar_array[j], self.bar_array[i]
+    self.swaps += 1
+    self.canvas.update_idletasks()
+    self.updatestats()
+
+  def bar_swap(self, i, j):
     """Swaps the bars at positions i and j"""
     i_x0, i_y0, i_x1, i_y1 = self.canvas.coords(self.rec(i))
     j_x0, j_y0, j_x1, j_y1 = self.canvas.coords(self.rec(j))
@@ -161,10 +201,10 @@ class Canvas_Array(object):
       self.rec_chg_color(arg, self.color_scheme[-2])
       if arg not in self.last_compared:
         self.last_compared.append(arg)
-
-    self.comparisons += 1
-    self.canvas.update_idletasks()
-    self.updatestats()
+    if not False:
+      self.comparisons += 1
+      self.canvas.update_idletasks()
+      self.updatestats()
 
   def clear_compared(self):
     for bar in self.last_compared:

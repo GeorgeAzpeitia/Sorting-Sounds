@@ -865,9 +865,74 @@ class Radix_Sort(object):
     self.arr.algo_name = 'Radix Sort'
     self.arr.updatestats()
 
-  def step(self):
+    self.digit_count = [0] * 10
+    self.backing_arr = [0] * self.arr.size
+    self.digit_place = 10
+    self.i = 0
+    self.counting = True
+    self.copying = False
 
-    if False:
+  def count(self):
+    digit = (self.arr.val(self.i) % self.digit_place) / (self.digit_place / 10)
+    self.digit_count[digit] += 1
+    self.arr.compared(self.i)
+    self.i += 1
+
+    if self.i >= self.arr.size:
+      self.i = self.arr.size - 1
+      
+      self.counting = False
+      self.copying = True
+      for i in range(self.arr.size):
+        self.backing_arr[i] = self.arr.val(i)
+
+      for x in range(1, len(self.digit_count)):
+        self.digit_count[x] += self.digit_count[x-1]
+      for x in range(len(self.digit_count)):
+        if self.digit_count[x] > 0:
+          self.digit_count[x] -= 1
+
+  def copy(self):
+    if self.i >= 0:
+      new_val = self.backing_arr[self.i]
+      self.backing_arr[self.i] = None
+      new_y = self.arr.get_y(new_val)
+      digit = (new_val % self.digit_place) / (self.digit_place / 10)
+
+      x = self.digit_count[digit]
+      self.digit_count[digit] -= 1
+      rec = self.arr.rec(x)
+      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
+
+      if self.arr.graph_mode:
+        y1 = new_y - 2 * self.arr.radius
+      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
+      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
+      self.arr.revert_color(x)
+      self.arr.bar_array[x] = (new_val, rec)
+
+      self.i -= 1
+      self.arr.swaps += 1
+      self.arr.updatestats()
+    else:
+      self.copying = False
+
+      self.digit_place *= 10
+      if ((self.arr.size - 1)%self.digit_place)/(self.digit_place/10) == 0 and self.digit_place > self.arr.size - 1:
+        self.finished = True
+      else:
+        self.i = 0
+        for i in range(len(self.digit_count)):
+          self.digit_count[i] = 0
+        self.counting = True
+
+  def step(self):
+    if self.counting:
+      self.count()
+    elif self.copying:
+      self.copy()
+
+    if not self.finished:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
