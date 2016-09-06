@@ -1,6 +1,6 @@
 import math
-import pyaudio
-import numpy
+import random
+
 class Bubble_Sort(object):
   """A basic implementation of bubble sort.
      We have to use a step function to correctly
@@ -201,6 +201,78 @@ class Insertion_Sort(object):
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
+
+class Shell_Sort(object):
+  """docstring for Selection_Sort"""
+  def __init__(self, master, arr, config):
+    self.master = master
+    self.arr = arr
+    self.config = config
+    self.finished = False
+    self.swapping = False
+    self.arr.algo_name = 'Shell Sort'
+    self.arr.updatestats()
+
+    self.inserting = True
+    self.gap = (self.arr.size-1) / 2
+    self.sorted_top = self.gap
+    self.i = 0
+    self.j = self.gap
+
+  def insert(self):
+    
+    if self.sorted_top > self.arr.size - 1:
+      self.gap /= 2
+      if self.gap == 0:
+        self.inserting = False
+        self.finished = True
+        return
+      else:
+        self.sorted_top = self.gap
+        self.j = self.sorted_top
+        self.i = 0
+
+    self.arr.compared(self.i, self.j)
+    if self.arr.val(self.j) < self.arr.val(self.i):
+      self.inserting = False
+      self.swapping = True
+    else:
+      self.j += 1
+      self.i += 1
+    self.sorted_top += 1
+
+  def swap_down(self):
+    self.arr.swap(self.i, self.j)
+    if self.i - self.gap > 0:
+      self.i -= self.gap
+      self.j -= self.gap
+
+      self.arr.compared(self.i, self.j)
+      if self.arr.val(self.j) >= self.arr.val(self.i):
+        self.swapping = False
+        self.inserting = True
+        self.j = self.sorted_top
+        self.i = self.sorted_top - self.gap
+    else:
+      self.swapping = False
+      self.inserting = True
+      self.j = self.sorted_top
+      self.i = self.sorted_top - self.gap
+
+  def step(self):
+    if self.inserting:
+      self.insert()
+    elif self.swapping:
+      self.swap_down()
+    if not self.finished:
+      if not self.config.paused:
+        self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
+    else:
+      self.arr.clear_compared()
+      self.arr.check_sorted()
+      self.finished = True
+      self.config.running = False
+
 
 class Heap_Sort(object):
   """docstring for Selection_Sort"""
@@ -698,7 +770,9 @@ class Quick_Sort(object):
       self.finished = True
       self.config.running = False
 
-class Shell_Sort(object):
+
+
+class Quick_Sort_Rand(object):
   """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
@@ -706,12 +780,67 @@ class Shell_Sort(object):
     self.config = config
     self.finished = False
     self.swapping = False
-    self.arr.algo_name = 'Shell Sort'
+    self.arr.algo_name = 'Quick Sort'
     self.arr.updatestats()
 
-  def step(self):
+    self.partitioning = True
+    self.part_swapping = False
+    self.call_stack = [(0, self.arr.size -1)]
+    self.part_left = -1
+    self.pivot = self.arr.size - 1
+    self.part_right = 0
 
-    if False:
+  def partition(self):
+    if self.part_right < self.pivot:
+      self.arr.compared(self.part_right, self.pivot)
+      if self.arr.val(self.part_right) <= self.arr.val(self.pivot):
+        self.part_left += 1
+        self.partitioning = False
+        self.part_swapping = True
+      else:
+        self.part_right += 1
+    else:
+      self.partitioning = False
+      self.swapping = True
+
+  def part_swap(self):
+    self.arr.swap(self.part_left, self.part_right)
+    self.part_right += 1
+    self.part_swapping = False
+    self.partitioning = True
+
+  def pivot_swap(self):
+    self.arr.swap(self.part_left + 1, self.pivot)
+    self.pivot = self.part_left + 1
+    last = self.call_stack.pop()
+    if self.pivot + 1 < last[1]:
+      self.call_stack.append((self.pivot + 1, last[1]))
+    if last[0] < self.pivot - 1:
+      self.call_stack.append((last[0], self.pivot - 1))
+    if len(self.call_stack) == 0:
+      self.finished = True
+      self.swapping = False
+      return
+    else:
+      self.swapping = False
+      self.partitioning = True
+      top = self.call_stack[-1]
+
+      self.part_left = top[0] - 1
+      self.part_right = top[0]
+      rand = random.randrange(top[0], top[1])
+      self.arr.swap(rand, top[1])
+      self.pivot = top[1]
+
+  def step(self):
+    if self.partitioning:
+      self.partition()
+    elif self.part_swapping:
+      self.part_swap()
+    elif self.swapping:
+      self.pivot_swap()
+
+    if not self.finished:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
@@ -719,6 +848,10 @@ class Shell_Sort(object):
       self.arr.check_sorted()
       self.finished = True
       self.config.running = False
+
+
+
+
 
 
 class Radix_Sort(object):
