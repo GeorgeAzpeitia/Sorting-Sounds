@@ -21,13 +21,11 @@ class Canvas_Array(object):
     self.comparisons = 0
     self.swaps = 0
     self.algo_name = None
-    self.graph_mode = self.config.graph_mode.get()
-    self.spirals = False
+    self.graph_mode = self.config.appearance.get() == 1
+    self.spirals = self.config.appearance.get() == 2
     self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
-    #Temporary solution until I figure out how to display an array with more elements
-    #than the width of the window
-    if self.size > self.width: 
-      self.size = self.width
+    self.radius = 2 + 15 * pow((1 - (self.size / 5000.0)), 3)
+
     
     self.bar_width = float(self.width) / float(self.size)
    
@@ -63,10 +61,21 @@ class Canvas_Array(object):
         i = random.randrange(0, self.size)
         j = random.randrange(0, self.size)
         vals[i], vals[j] = vals[j], vals[i]
-    if self.graph_mode:
+    #Bar Graph
+    if self.config.appearance.get() == 0:    
+      x0 = 0
+      x1 = self.bar_width
+      y1 = self.height + 1
+      for val in vals:
+        y0 = self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
+        color = self.get_color(val)
+        self.bar_array.append((val, self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, tags=color, width=0)))
+        x0 = x1 + self.bar_spacer_width
+        x1 = x0 + self.bar_width
+    #Point Graph
+    elif self.graph_mode:
       x_bar_left = 0
       x_bar_right = self.bar_width
-      self.radius = 15 - (self.size // 100)
       for val in vals:
         x_center = float(x_bar_left + x_bar_right) / 2
         y0 = self.height - self.radius - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
@@ -77,9 +86,8 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
         x_bar_left = x_bar_right + self.bar_spacer_width
         x_bar_right = x_bar_left + self.bar_width
-
+    #Spiral Graph
     elif self.spirals:
-      self.radius = 15 - (self.size // 100)
       self.x_center = (self.width / 2)
       self.y_center = self.height / 2
       for i in range(len(vals)):
@@ -89,44 +97,22 @@ class Canvas_Array(object):
         color = self.get_color(val)
         self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
 
-    elif self.bar_width <= 1:
-      x0 = 0
-      x1 = 0
-      y1 = self.height - 1
-      
-      for val in vals:
-        y0 = self.height - (val * self.bar_slope)
-        color = self.get_color(val)
-        self.bar_array.append((val, self.canvas.create_line(x0, y0, x1, y1, fill=color, tags=color)))
-        x0 += 1
-        x1 += 1
-    else:
-      x0 = 0
-      x1 = self.bar_width
-      y1 = self.height + 1
-      for val in vals:
-        y0 = self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
-        color = self.get_color(val)
-        self.bar_array.append((val, self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, tags=color, width=0)))
-        x0 = x1 + self.bar_spacer_width
-        x1 = x0 + self.bar_width
+    
 
-  def translate(self, x, y):
+  def translate(self, x, val):
     """Takes in an array index x, and the value at that x and returns the bbox coords"""
     x = float(x) / (self.size - 1)
-    y = self.height / 2 * (float(y) / (self.size - 1))  - 20
-    x, y = y * math.cos(2*math.pi*x), y * math.sin(2*math.pi*x)
+    val = (self.height - 20) / 2 * (float(val) / (self.size - 1))
+    x, val = val * math.cos(2*math.pi*x), val * math.sin(2*math.pi*x)
+
     x0 = self.x_center + x - self.radius
-    y0 = self.height - self.y_center + y - self.radius
+    y0 = self.height - self.y_center + val - self.radius
     x1 = self.x_center + x + self.radius
     y1 = y0 + 2 * self.radius
     return x0, y0, x1, y1
 
   def get_y(self, val):
-    if self.bar_width <= 1:
-      return self.height - (val * self.bar_slope)
-    else:
-      return self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
+    return self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
   def updatestats(self):
     stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get())
     self.canvas.itemconfig(self.statlabel, text=stats)
@@ -229,6 +215,27 @@ class Canvas_Array(object):
         for i in range(len(self.bar_array)):
           self.revert_color(i)
         self.config.running = False
+
+  def replace_val(self, i, val):
+    rec = self.rec(i)
+    if self.spirals:
+      self.canvas.coords(rec, *self.translate(i, val))
+      self.bar_array[i] = (val, rec)
+    else:
+      y = self.get_y(val)
+      x0, y0, x1, y1 = self.canvas.coords(rec)
+      if self.graph_mode:
+        y1 = y - 2 * self.radius
+      self.canvas.coords(rec, x0, y, x1, y1)  
+      self.canvas.coords(rec, x0, y, x1, y1)
+      self.bar_array[i] = (val, rec)
+    self.canvas.itemconfig(rec, tags=self.get_color(val))
+    self.revert_color(i)
+    self.canvas.update_idletasks()
+
+    self.swaps +=1
+    self.updatestats()
+    
 
 
 

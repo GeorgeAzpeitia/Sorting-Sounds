@@ -243,7 +243,7 @@ class Shell_Sort(object):
 
   def swap_down(self):
     self.arr.swap(self.i, self.j)
-    if self.i - self.gap > 0:
+    if self.i - self.gap > -1:
       self.i -= self.gap
       self.j -= self.gap
 
@@ -296,7 +296,7 @@ class Heap_Sort(object):
     self.heap_var = -1
     self.swapping_i = -1
     self.swapping_j = -1
-    self.layer_colors = ['#2c0b41', '#3f1b5b', '#4e1472', '#601c8a', '#752098', '#982f92', '#ba3f8d', '#dd4d87', '#eb688c', '#f18b97', '#f5aca0', '#facdaa']
+    self.layer_colors = ['#2c0b41', '#3f1b5b', '#4e1472', '#601c8a', '#752098', '#982f92', '#ba3f8d', '#dd4d87', '#eb688c', '#f18b97', '#f5aca0', '#facdaa', '#fee8c8']
 
   def parent(self, i):
     return (i - 1) >> 1
@@ -455,19 +455,7 @@ class Merge_Sort(object):
 
   def copy(self):
     if self.merge_k <= self.merge_right:
-
-      new_val = self.backing_arr[self.merge_k]
-      self.backing_arr[self.merge_k] = None
-      new_y = self.arr.get_y(new_val)
-      rec = self.arr.rec(self.merge_k)
-      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
-      if self.arr.graph_mode:
-        y1 = new_y - 2 * self.arr.radius
-      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
-      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
-      self.arr.revert_color(self.merge_k)
-      self.arr.bar_array[self.merge_k] = (new_val, rec)
-
+      self.arr.replace_val(self.merge_k, self.backing_arr[self.merge_k])
       self.merge_k += 1
       self.arr.swaps += 1
       self.arr.updatestats()
@@ -620,17 +608,7 @@ class Merge_Sort_Iter(object):
 
   def copy(self):
     if self.merge_k <= self.merge_right:
-      new_val = self.backing_arr[self.merge_k]
-      self.backing_arr[self.merge_k] = None
-      new_y = self.arr.get_y(new_val)
-      rec = self.arr.rec(self.merge_k)
-      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
-      if self.arr.graph_mode:
-        y1 = new_y - 2 * self.arr.radius
-      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
-      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
-      self.arr.revert_color(self.merge_k)
-      self.arr.bar_array[self.merge_k] = (new_val, rec)
+      self.arr.replace_val(self.merge_k, self.backing_arr[self.merge_k])
 
       self.merge_k += 1
       self.arr.swaps += 1
@@ -710,7 +688,8 @@ class Quick_Sort(object):
 
     self.partitioning = True
     self.part_swapping = False
-    self.call_stack = [(0, self.arr.size -1)]
+    self.call_stack = [(0, self.arr.size-1)]
+    
     self.part_left = -1
     self.pivot = self.arr.size - 1
     self.part_right = 0
@@ -786,6 +765,8 @@ class Quick_Sort_Rand(object):
     self.partitioning = True
     self.part_swapping = False
     self.call_stack = [(0, self.arr.size -1)]
+    rand = random.randrange(0, self.arr.size-1)
+    self.arr.swap(rand, self.arr.size-1)
     self.part_left = -1
     self.pivot = self.arr.size - 1
     self.part_right = 0
@@ -895,21 +876,10 @@ class Radix_Sort(object):
   def copy(self):
     if self.i >= 0:
       new_val = self.backing_arr[self.i]
-      self.backing_arr[self.i] = None
-      new_y = self.arr.get_y(new_val)
       digit = (new_val % self.digit_place) / (self.digit_place / 10)
-
       x = self.digit_count[digit]
       self.digit_count[digit] -= 1
-      rec = self.arr.rec(x)
-      x0, y0, x1, y1 = self.arr.canvas.coords(rec)
-
-      if self.arr.graph_mode:
-        y1 = new_y - 2 * self.arr.radius
-      self.arr.canvas.coords(rec, x0, new_y, x1, y1)
-      self.arr.canvas.itemconfig(rec, tags=self.arr.get_color(new_val))
-      self.arr.revert_color(x)
-      self.arr.bar_array[x] = (new_val, rec)
+      self.arr.replace_val(x, new_val)
 
       self.i -= 1
       self.arr.swaps += 1

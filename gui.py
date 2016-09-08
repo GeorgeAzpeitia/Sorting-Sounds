@@ -55,7 +55,8 @@ class Config(object):
     self.last_inst = None
     self.sound = None
     self.sound_on = tk.IntVar()
-    
+    #0 = Bars, 1 = Points, 2 = Spiral
+    self.appearance = tk.IntVar()
 
 class App(object):
   def __init__(self, master):
@@ -84,13 +85,13 @@ class App(object):
     self.arr_size_entry.pack(side='left')
 
     self.arr_size_scale = tk.Scale(self.arr_ctl, 
-      from_=1, to=config.width, orient=tk.HORIZONTAL, variable=config.arr_size, showvalue=0)
+      from_=1, to=5000, orient=tk.HORIZONTAL, variable=config.arr_size, showvalue=0)
     self.arr_size_scale.pack(anchor='w', fill='x')
 
     self.arr_size_scale_frame = tk.Frame(self.arr_ctl)
     self.arr_size_scale_frame.pack(anchor='w', fill='x')
-    tk.Label(self.arr_size_scale_frame, text='5').pack(pady=3, side='left')
-    tk.Label(self.arr_size_scale_frame, text=config.width).pack(pady=3, side='right')
+    tk.Label(self.arr_size_scale_frame, text='3').pack(pady=3, side='left')
+    tk.Label(self.arr_size_scale_frame, text=5000).pack(pady=3, side='right')
 
     def manual_size(event):
       self.arr_size_scale.set(int(config.arr_size.get()))
@@ -115,20 +116,28 @@ class App(object):
     self.arr_radio_almost.grid(row=1, column=1, sticky='w')
     self.arr_check_few_uniq = tk.Checkbutton(self.arr_sorting_ctl, text='Few Unique', variable=config.arr_few_unique)
     self.arr_check_few_uniq.grid(row=2, column=0, sticky='w')
-    self.arr_colors_frame = tk.Frame(self.arr_ctl)
 
+    self.arr_appearance_ctl = tk.LabelFrame(self.arr_ctl, text='Appearance', padx=5)
+    self.arr_appearance_ctl.pack(pady=5, fill='x')
+    
+    self.arr_colors_frame = tk.Frame(self.arr_appearance_ctl)
     self.arr_colors_frame.pack(fill='x', pady=5)
     tk.Label(self.arr_colors_frame, text='Color Scheme ').pack(side='left')
     self.arr_opt_colors = tk.OptionMenu(self.arr_colors_frame, config.color_scheme, *config.colors)
     self.arr_opt_colors.pack(side='left')
-    self.arr_graph = tk.Checkbutton(self.arr_ctl, text='Graph Mode', variable=config.graph_mode)
+    self.arr_bar = tk.Radiobutton(self.arr_appearance_ctl, text='Bars', variable=config.appearance, value = 0)
+    self.arr_bar.pack(side='left')
+    self.arr_graph = tk.Radiobutton(self.arr_appearance_ctl, text='Points', variable=config.appearance, value = 1)
     self.arr_graph.pack(side='left')
+    self.arr_spiral = tk.Radiobutton(self.arr_appearance_ctl, text='Spiral', variable=config.appearance, value = 2)
+    self.arr_spiral.pack(side='left')
 
-    self.arr_graph = tk.Checkbutton(self.arr_ctl, text='Sound (Experimental)', variable=config.sound_on)
-    self.arr_graph.pack(side='left')
+    self.arr_sound = tk.Checkbutton(self.arr_ctl, text='Sound (Experimental)', variable=config.sound_on)
+    self.arr_sound.pack(side='left')
 
     def change_sound(*args):
       sound.sound_on = config.sound_on.get()
+
     config.sound_on.trace('w', change_sound)
     self.algo_ctl = tk.LabelFrame(self.master, text='Algorithm Controls', pady=5, padx=5)
     self.algo_ctl.pack(padx=10, fill='x')
@@ -193,6 +202,8 @@ class App(object):
       self.canvas.delete('all')
       config.first_run = True
       self.canvas.config(bg=config.colors_dict[config.color_scheme.get()][-1])
+      if config.arr_size.get() < 3:
+        config.arr_size.set(3)
       self.arr = sort_array.Canvas_Array(self.master, self.canvas, config)
       config.sound.arr = self.arr
       self.algo = config.algorithms[config.algorithm.get()](self.master, self.arr, config)
