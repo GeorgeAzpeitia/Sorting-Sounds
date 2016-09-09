@@ -1,12 +1,16 @@
+"""
+This is the implementation of all the sorting algorithms to be used by the visualizer.
+Every algorithm must have a step function which calls itself until it is finished.
+The step function serves to perform one step of the algorithm, update the canvas,
+and then schedule a callback after a delay. Each step function works as a dispatch
+to run the correct portion of the algorithm depending on its state.
+"""
 import math
 import random
-
 class Bubble_Sort(object):
-  """A basic implementation of bubble sort.
-     We have to use a step function to correctly
-     implement the bubble sort in a manner that
-     allows the canvas object to callback the step
-     function for every step of animation
+  """
+  An implementation of bubble sort with early termination if it detects an
+  already sorted array.
   """
   def __init__(self, master, arr, config):
     self.master = master
@@ -17,41 +21,60 @@ class Bubble_Sort(object):
     self.finished = False
     self.swapping = False
  
+    self.bubbling = True
     self.i = 0
-    self.j = 0
+    self.j = 1
     self.n = self.arr.size - 1
     self.swap_cnt = 0
-  def step(self):
-    if not self.swapping:
-      self.arr.compared(self.j, self.j + 1)
-      if self.arr.val(self.j) > self.arr.val(self.j + 1):
-        self.swapping = True
+
+  def bubble_up(self):
+    if self.n == 0:
+      self.bubbling = False
+      self.finished = True
+      return
+
+    if self.j > self.n:
+      if self.swap_cnt == 0:
+        self.bubbling = False
+        self.finished = True
+        return
+      else:
+        self.swap_cnt = 0
+      self.j = 1
+      self.n -= 1
+      self.i += 1
+  
+    self.arr.compared(self.j, self.j - 1)
+    if self.arr.val(self.j - 1) > self.arr.val(self.j):
+      self.bubbling = False
+      self.swapping = True
     else:
-        self.swap_cnt += 1
-        self.arr.swap(self.j, self.j + 1)
-        self.swapping = False
-
-    if not self.swapping: 
       self.j += 1
-      if self.j >= self.n:
-        if self.swap_cnt == 0:
-          self.finished = True
-        else:
-          self.swap_cnt = 0
-        self.j = 0
-        self.n -= 1
-        self.i += 1
 
-    if self.i <= self.arr.size - 1 and not self.finished:
+  def swap(self):
+    self.swap_cnt += 1
+    self.arr.swap(self.j, self.j-1)
+    self.swapping = False
+    self.bubbling = True
+    self.j += 1
+
+  def step(self):
+    if self.bubbling:
+      self.bubble_up()
+    elif self.swapping:
+      self.swap()        
+    if not self.finished:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
       self.arr.clear_compared()
-      self.finished = True
       self.arr.check_sorted()
 
 class Selection_Sort(object):
-  """docstring for Selection_Sort"""
+  """
+  Selection sort works by continously finding the smallest element in the array
+  and pushing it to the top of the sorted sub-array.
+  """
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -91,7 +114,6 @@ class Selection_Sort(object):
       self.arr.check_sorted()
 
 class Cocktail_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -160,7 +182,6 @@ class Cocktail_Sort(object):
       self.arr.check_sorted()
 
 class Insertion_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -203,7 +224,6 @@ class Insertion_Sort(object):
       self.finished = True
 
 class Shell_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -275,8 +295,6 @@ class Shell_Sort(object):
 
 
 class Heap_Sort(object):
-  """docstring for Selection_Sort"""
-
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -384,7 +402,8 @@ class Heap_Sort(object):
         self.swapping = False
       elif self.heapifying:
         self.heapify(self.heap_var)
-    if self.heap_size > 0:
+
+    if not self.finished and self.heap_size > 0:
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
@@ -396,7 +415,6 @@ class Heap_Sort(object):
 
 
 class Merge_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -552,7 +570,6 @@ class Merge_Sort(object):
       self.finished = True
 
 class Merge_Sort_Iter(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -676,7 +693,6 @@ class Merge_Sort_Iter(object):
 
 
 class Quick_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -752,7 +768,6 @@ class Quick_Sort(object):
 
 
 class Quick_Sort_Rand(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr
@@ -836,7 +851,6 @@ class Quick_Sort_Rand(object):
 
 
 class Radix_Sort(object):
-  """docstring for Selection_Sort"""
   def __init__(self, master, arr, config):
     self.master = master
     self.arr = arr

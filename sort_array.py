@@ -1,9 +1,18 @@
+
 import random
 import math
-class Canvas_Array(object):
-  """docstring for Array"""
-  #size of the gap between bars, should be kept between 0 and 0.25
-  spacer_ratio = 0.05 
+class Sort_Array(object):
+  
+  """
+  This is the backing array that holds the data to be sorted by the
+  sorting algorithms in algos.py as a tuple of the value at that index
+  and the canvas shape id. It creates the necessary shapes upon the
+  tkinter Canvas passed into it and updates them via methods like swap
+  and replace_val. It is able to scale the shape of its figures to
+  match that of the canvas that is passed in.
+  """
+
+  
   
   def __init__(self, master, canvas, config):
     self.master = master
@@ -15,32 +24,53 @@ class Canvas_Array(object):
     self.width = int(self.canvas['width'])
     self.height = int(self.canvas['height'])
     self.bar_array = []
+
+    #A list that holds the canvas id of the last few elements that have been compared
     self.last_compared = []
+
+    #indices used to verify that an array is sorted
     self.sorted_check_i = 0
     self.sorted_check_j = 1
+
+    #Variables used in the display of algorithm stats
     self.comparisons = 0
     self.swaps = 0
     self.algo_name = None
+    self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
+
+    #Which mode to be display the data in, if both false then we use bars
     self.graph_mode = self.config.appearance.get() == 1
     self.spirals = self.config.appearance.get() == 2
-    self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
-    self.radius = 2 + 15 * pow((1 - (self.size / 5000.0)), 3)
 
-    
+    #Constants scaled to the size of the array
+    self.radius = 2 + 15 * pow((1 - (self.size / 5000.0)), 3)
     self.bar_width = float(self.width) / float(self.size)
-   
-    if (self.bar_width * Canvas_Array.spacer_ratio) < 0.25:
+
+    #size of the gap between bars as a percentage of bar size
+    self.spacer_ratio = 0.05
+    
+    #The if the array has too many elements the spacer takes up too much space
+    #so we just get rid of it
+    if (self.bar_width * self.spacer_ratio) < 0.15:
       self.bar_spacer_width = 0
     else:
-      self.bar_spacer_width = math.ceil(self.bar_width * Canvas_Array.spacer_ratio)
+      self.bar_spacer_width = math.ceil(self.bar_width * self.spacer_ratio)
 
+    #However, we now need to recalculate the width of the bars with the new spacer in mind
     self.bar_width = (float(self.width) - (self.size - 1) * self.bar_spacer_width) / self.size 
     self.bar_slope = float(self.height - 50) / float(self.width)
-    self.Build_Bars()
+    self.Build_Display()
 
-  def Build_Bars(self):
+  def Build_Display(self):
+    """
+    Constructs the initial array and then creates the necessary shapes on the
+    on the canvas. It reads the selected display style and initial sorting from
+    user selections in the interface.
+    """
     vals = []
+
     if self.config.arr_few_unique.get():
+      #array is to have few unique values
       uniq = 4
       for i in range(1, uniq):
         vals = vals + [int(i * (float(self.size - 1) / (uniq - 1)))] * (self.size // (uniq- 1))
@@ -61,6 +91,7 @@ class Canvas_Array(object):
         i = random.randrange(0, self.size)
         j = random.randrange(0, self.size)
         vals[i], vals[j] = vals[j], vals[i]
+
     #Bar Graph
     if self.config.appearance.get() == 0:    
       x0 = 0
@@ -72,6 +103,7 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_rectangle(x0, y0, x1, y1, fill=color, tags=color, width=0)))
         x0 = x1 + self.bar_spacer_width
         x1 = x0 + self.bar_width
+
     #Point Graph
     elif self.graph_mode:
       x_bar_left = 0
@@ -86,6 +118,7 @@ class Canvas_Array(object):
         self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
         x_bar_left = x_bar_right + self.bar_spacer_width
         x_bar_right = x_bar_left + self.bar_width
+
     #Spiral Graph
     elif self.spirals:
       self.x_center = (self.width / 2)
@@ -93,43 +126,65 @@ class Canvas_Array(object):
       for i in range(len(vals)):
         val = vals[i]
         x0, y0, x1, y1 = self.translate(i, val)
-        # print (x, y)
         color = self.get_color(val)
         self.bar_array.append((val, self.canvas.create_oval(x0, y0, x1, y1, fill=color, tags=color, width=0)))
 
-    
+  def translate(self, i, val):
+    """
+    Translates a given index and value into bbox coordinates of where the point
+    should be in the polar coordinate plane.
+    """
+    i = float(i) / (self.size - 1)
+    val = (self.height - 30) / 2 * (float(val) / (self.size - 1))
+    i, val = val * math.cos(2*math.pi*i), val * math.sin(2*math.pi*i)
 
-  def translate(self, x, val):
-    """Takes in an array index x, and the value at that x and returns the bbox coords"""
-    x = float(x) / (self.size - 1)
-    val = (self.height - 20) / 2 * (float(val) / (self.size - 1))
-    x, val = val * math.cos(2*math.pi*x), val * math.sin(2*math.pi*x)
-
-    x0 = self.x_center + x - self.radius
+    x0 = self.x_center + i - self.radius
     y0 = self.height - self.y_center + val - self.radius
-    x1 = self.x_center + x + self.radius
+    x1 = self.x_center + i + self.radius
     y1 = y0 + 2 * self.radius
     return x0, y0, x1, y1
 
   def get_y(self, val):
+    """
+    Takes a value and returns the y canvas coordinate for that value, only to be
+    used with the bar and point graph display modes. Val is expected to be within
+    [0, size)
+    """
     return self.height - (self.bar_slope * (self.bar_width + ((self.bar_width + self.bar_spacer_width) * val)))
-  def updatestats(self):
-    stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get())
+
+  def updatestats(self, extra=''):
+    """
+    Updates the label containing all the stats for the array, takes an optional
+    string parameter to display algorithm specific statistics.
+    """
+    stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms\n{4}".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get(), extra)
     self.canvas.itemconfig(self.statlabel, text=stats)
     self.canvas.update_idletasks()
 
   def get_color(self, val):
+    """
+    Matches a value with its corresponding color, this allows for proper display
+    of the color gradients used in the various color schemes.
+    """
     color_count = len(self.color_scheme) - 3
     x = int(math.floor(val / (float(self.size) / color_count)))
-    # if x == color_count: x = color_count - 1
     return self.color_scheme[x]
 
   def swap(self, i, j):
+    """
+    A dispatch function for swaps, needed because the spiral display
+    cannot be swapped normally.
+    """
     if self.spirals:
       self.spiral_swap(i, j)
     else:
       self.bar_swap(i, j)
+
   def spiral_swap(self, i, j):
+    """
+    Swaps the position of two points at indices i and j, only to be used with 
+    the spiral display mode.
+    """
     i_val = self.val(i)
     j_val = self.val(j)
     i_x0, i_y0, i_x1, i_y1 = self.translate(j, i_val)
@@ -142,7 +197,7 @@ class Canvas_Array(object):
     self.updatestats()
 
   def bar_swap(self, i, j):
-    """Swaps the bars at positions i and j"""
+    """Swaps the bars/points at indices i and j"""
     i_x0, i_y0, i_x1, i_y1 = self.canvas.coords(self.rec(i))
     j_x0, j_y0, j_x1, j_y1 = self.canvas.coords(self.rec(j))
     self.canvas.move(self.rec(i), j_x0 - i_x0, 0)
@@ -153,24 +208,35 @@ class Canvas_Array(object):
     self.updatestats()
 
   def rec_chg_color(self, addr, color):
-    """Changes the color of the bar at position i"""
+    """Changes the color of a shape given the canvas id of that shape"""
     self.canvas.itemconfig(addr, fill=color)
 
   def chg_color(self, i, color):
+    """Changes the color of a shape at index i"""
     self.canvas.itemconfig(self.rec(i), fill=color)
 
   def revert_color(self, i):
+    """
+    Reverts the color of a shape to the color it was tagged with. This will 
+    usually be the color corresponding to the value of that shape
+    """
     self.chg_color(i, self.canvas.gettags(self.rec(i))[0])
 
   def val(self, i):
-    """returns the val of the bar at index i """
+    """returns the val of the shape at index i """
     return self.bar_array[i][0]
 
   def rec(self, i):
+    """returns the canvas id of shape at index i"""
     return self.bar_array[i][1]
 
   def compared(self, *args):
-    """colors two bars red to show they're being compared"""
+    """
+    Changes the color of any number of shapes to denote that they're being compared
+    and increments the comparison counter accordingly. It reverts shapes back to
+    their original color if they're not being compared in subsequent calls of this
+    function.
+    """
     for arg in args:
       self.config.sound.sound_access(self.val(arg))
       
@@ -193,11 +259,20 @@ class Canvas_Array(object):
       self.updatestats()
 
   def clear_compared(self):
+    """
+    Reverts the colors of all the shapes that were last compared.
+    """
     for bar in self.last_compared:
       self.rec_chg_color(bar, self.canvas.gettags(bar)[0])
     self.last_compared = []
 
   def check_sorted(self):
+    """
+    This will check the elements of the array to verify that they're in sorted 
+    order. Once called it will continue to call itself in order to finish the
+    operation. When it is done it will wait for 0.75s and then revert the array
+    to its original colors. 
+    """
     self.chg_color(self.sorted_check_i, 'green')
     if self.sorted_check_j <= self.size - 1:
       if(self.val(self.sorted_check_i) <= self.val(self.sorted_check_j)):
@@ -217,6 +292,10 @@ class Canvas_Array(object):
         self.config.running = False
 
   def replace_val(self, i, val):
+    """
+    Given a value and an index it will replace the value at that that index and
+    adjust the shape accordingly.
+    """
     rec = self.rec(i)
     if self.spirals:
       self.canvas.coords(rec, *self.translate(i, val))
