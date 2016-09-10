@@ -17,7 +17,6 @@ class Bubble_Sort(object):
     self.arr = arr
     self.config = config
     self.arr.algo_name = 'Bubble Sort'
-    self.arr.updatestats()
     self.finished = False
     self.swapping = False
  
@@ -26,6 +25,8 @@ class Bubble_Sort(object):
     self.j = 1
     self.n = self.arr.size - 1
     self.swap_cnt = 0
+    self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
+
 
   def bubble_up(self):
     if self.n == 0:
@@ -40,6 +41,8 @@ class Bubble_Sort(object):
         return
       else:
         self.swap_cnt = 0
+        self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
+
       self.j = 1
       self.n -= 1
       self.i += 1
@@ -53,6 +56,7 @@ class Bubble_Sort(object):
 
   def swap(self):
     self.swap_cnt += 1
+    self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
     self.arr.swap(self.j, self.j-1)
     self.swapping = False
     self.bubbling = True
@@ -67,6 +71,7 @@ class Bubble_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
 
@@ -82,18 +87,19 @@ class Selection_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Selection Sort'
-    self.arr.updatestats()
 
     self.min_idx = 0
     self.sorted_idx = 0
     self.j = 1
     self.n = self.arr.size
+    self.arr.updatestats("Current Min: " + str(self.arr.val(self.min_idx)))
 
   def step(self):
     if not self.swapping:
       self.arr.compared(self.min_idx, self.j)
       if self.arr.val(self.min_idx) > self.arr.val(self.j):
         self.min_idx = self.j
+        self.arr.updatestats("Current Min: " + str(self.arr.val(self.min_idx)))
       self.j += 1
       if self.j == self.n:
         self.swapping = True
@@ -109,6 +115,7 @@ class Selection_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.finished = True
       self.arr.check_sorted()
@@ -121,7 +128,6 @@ class Cocktail_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Cocktail Sort'
-    self.arr.updatestats()
 
     self.i = 0
     self.j = 1
@@ -129,6 +135,8 @@ class Cocktail_Sort(object):
     self.bottom = 0
     self.up = True
     self.swap_cnt = 0
+    self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
+
   def step(self):
     if self.up:
       if not self.swapping:
@@ -137,6 +145,7 @@ class Cocktail_Sort(object):
           self.swapping = True
       else:
           self.swap_cnt += 1
+          self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
           self.arr.swap(self.i, self.j)
           self.swapping = False
       if not self.swapping: 
@@ -147,6 +156,8 @@ class Cocktail_Sort(object):
             self.finished = True
           else:
             self.swap_cnt = 0
+            self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
+
           self.top -= 1
           self.j = self.top
           self.i = self.j - 1
@@ -158,6 +169,7 @@ class Cocktail_Sort(object):
           self.swapping = True
       else:
           self.swap_cnt += 1
+          self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
           self.arr.swap(self.i, self.j)
           self.swapping = False
       if not self.swapping: 
@@ -168,6 +180,7 @@ class Cocktail_Sort(object):
             self.finished = True
           else:
             self.swap_cnt = 0
+            self.arr.updatestats("Swaps this pass: " + str(self.swap_cnt))
           self.i = self.bottom
           self.j = self.i + 1
           self.bottom += 1
@@ -177,6 +190,7 @@ class Cocktail_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.finished = True
       self.arr.check_sorted()
@@ -189,11 +203,11 @@ class Insertion_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Insertion Sort'
-    self.arr.updatestats()
 
     self.sorted_idx = 0
     self.i = 0
     self.j = 1
+    self.arr.updatestats("Sorted Sub-Array Size: " + str(self.sorted_idx + 1))
 
   def step(self):
     if not self.swapping:
@@ -202,6 +216,7 @@ class Insertion_Sort(object):
         self.swapping = True
       else:
         self.sorted_idx += 1
+        self.arr.updatestats("Sorted Sub-Array Size: " + str(self.sorted_idx + 1))
         self.i = self.sorted_idx
         self.j = self.sorted_idx + 1
         
@@ -212,6 +227,7 @@ class Insertion_Sort(object):
       self.j -= 1
       if self.i == -1:
         self.sorted_idx += 1
+        self.arr.updatestats("Sorted Sub-Array Size: " + str(self.sorted_idx + 1))
         self.i = self.sorted_idx
         self.j = self.sorted_idx + 1
 
@@ -219,6 +235,7 @@ class Insertion_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -231,18 +248,19 @@ class Shell_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Shell Sort'
-    self.arr.updatestats()
 
     self.inserting = True
     self.gap = (self.arr.size-1) / 2
     self.sorted_top = self.gap
     self.i = 0
     self.j = self.gap
+    self.arr.updatestats("Gap Size: " + str(self.gap))
 
   def insert(self):
     
     if self.sorted_top > self.arr.size - 1:
       self.gap /= 2
+      self.arr.updatestats("Gap Size: " + str(self.gap))
       if self.gap == 0:
         self.inserting = False
         self.finished = True
@@ -288,6 +306,7 @@ class Shell_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -315,6 +334,7 @@ class Heap_Sort(object):
     self.swapping_i = -1
     self.swapping_j = -1
     self.layer_colors = ['#2c0b41', '#3f1b5b', '#4e1472', '#601c8a', '#752098', '#982f92', '#ba3f8d', '#dd4d87', '#eb688c', '#f18b97', '#f5aca0', '#facdaa', '#fee8c8']
+    self.arr.updatestats("Building Heap")
 
   def parent(self, i):
     return (i - 1) >> 1
@@ -323,7 +343,7 @@ class Heap_Sort(object):
   def left(self, i):
     return ((i + 1) << 1) - 1
   def get_layer(self, i):
-    return int(math.floor(math.log(i + 1, 2)))
+    return int(math.log(i + 1, 2))
   def color_leaves(self):
     if self.leaf > self.build_heap_cnt:
       self.arr.canvas.itemconfig(self.arr.rec(self.leaf), tags=self.layer_colors[self.get_layer(self.leaf)])
@@ -378,7 +398,6 @@ class Heap_Sort(object):
       if self.swapping:
         self.arr.canvas.itemconfig(self.arr.rec(self.swapping_j), tags=self.layer_colors[self.get_layer(self.swapping_i)])
         self.arr.canvas.itemconfig(self.arr.rec(self.swapping_i), tags=self.layer_colors[self.get_layer(self.swapping_j)])
-        # self.arr.clear_compared()
         self.arr.swap(self.swapping_i, self.swapping_j)
         self.swapping = False
       elif self.heapifying:
@@ -395,6 +414,7 @@ class Heap_Sort(object):
         self.heapifying = True
         self.heap_var = 0
         self.heap_size -= 1
+        self.arr.updatestats("Heap Size: " + str(self.heap_size + 1) + " Layers: " + str(self.get_layer(self.heap_size) + 1))
       elif self.swapping:
         self.arr.canvas.itemconfig(self.arr.rec(self.swapping_j), tags=self.layer_colors[self.get_layer(self.swapping_i)])
         self.arr.canvas.itemconfig(self.arr.rec(self.swapping_i), tags=self.layer_colors[self.get_layer(self.swapping_j)])
@@ -408,6 +428,7 @@ class Heap_Sort(object):
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
       self.arr.canvas.itemconfig(self.arr.rec(0), tags=self.arr.get_color(self.arr.val(0)))
+      self.arr.updatestats(' ')
       self.arr.revert_color(0)
       self.arr.clear_compared()
       self.arr.check_sorted()
@@ -434,6 +455,7 @@ class Merge_Sort(object):
     self.color_left = self.call_stack[0][0]
     self.color_mid = self.call_stack[0][1]
     self.color_right = self.call_stack[0][2]
+    self.arr.updatestats("Merging [%d - %d] with [%d - %d]".format(self.color_left, self.color_mid, self.color_mid+1, self.color_right))
     self.merge_left = None
     self.merge_mid = None
     self.merge_right = None
@@ -504,6 +526,7 @@ class Merge_Sort(object):
     self.arr.revert_color(self.color_mid)
 
     self.color_left, self.color_mid, self.color_right = l, mid, r
+    self.arr.updatestats("Merging [{} - {}] with [{} - {}]".format(self.color_left, self.color_mid, self.color_mid+1, self.color_right))
 
     self.arr.canvas.itemconfig(self.arr.rec(self.color_left), tags='green')
     self.arr.canvas.itemconfig(self.arr.rec(self.color_mid), tags='blue')
@@ -565,6 +588,7 @@ class Merge_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -577,7 +601,6 @@ class Merge_Sort_Iter(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Merge Sort (Iterative)'
-    self.arr.updatestats()
 
     self.backing_arr = [None] * self.arr.size
     self.merge_size = 1
@@ -594,6 +617,7 @@ class Merge_Sort_Iter(object):
     self.merge_i = None
     self.merge_j = None
     self.merge_k = None
+    self.arr.updatestats("Merging sub-arrays of size {} into sub-array of size {}".format(self.merge_size, min(self.merge_size * 2, self.arr.size)))
 
   def merge(self):
     if self.merge_i <= self.merge_mid and self.merge_j <= self.merge_right:
@@ -672,6 +696,7 @@ class Merge_Sort_Iter(object):
     if self.merge_l_start >= self.arr.size - 1:
       self.merge_l_start = 0
       self.merge_size *= 2
+      self.arr.updatestats("Merging sub-arrays of size {} into sub-array of size {}".format(self.merge_size, min(self.merge_size * 2, self.arr.size)))
 
   def step(self):
     if self.splitting:
@@ -687,6 +712,7 @@ class Merge_Sort_Iter(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -700,7 +726,6 @@ class Quick_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Quick Sort'
-    self.arr.updatestats()
 
     self.partitioning = True
     self.part_swapping = False
@@ -708,6 +733,7 @@ class Quick_Sort(object):
     
     self.part_left = -1
     self.pivot = self.arr.size - 1
+    self.arr.updatestats("Pivot: "+str(self.arr.val(self.pivot)))
     self.part_right = 0
 
   def partition(self):
@@ -747,6 +773,7 @@ class Quick_Sort(object):
       self.part_left = top[0] - 1
       self.pivot = top[1]
       self.part_right = top[0]
+      self.arr.updatestats("Pivot: "+str(self.arr.val(self.pivot)))
 
   def step(self):
     if self.partitioning:
@@ -760,6 +787,7 @@ class Quick_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -775,15 +803,16 @@ class Quick_Sort_Rand(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Quick Sort'
-    self.arr.updatestats()
 
     self.partitioning = True
     self.part_swapping = False
     self.call_stack = [(0, self.arr.size -1)]
+    orig_pivot = self.arr.val(self.arr.size-1)
     rand = random.randrange(0, self.arr.size-1)
     self.arr.swap(rand, self.arr.size-1)
-    self.part_left = -1
     self.pivot = self.arr.size - 1
+    self.arr.updatestats("Pivot before random swap: {} Pivot after swap: {}".format(orig_pivot, self.arr.val(self.pivot)))
+    self.part_left = -1
     self.part_right = 0
 
   def partition(self):
@@ -824,9 +853,11 @@ class Quick_Sort_Rand(object):
 
       self.part_left = top[0] - 1
       self.part_right = top[0]
+      orig_pivot = self.arr.val(top[1])
       rand = random.randrange(top[0], top[1])
       self.arr.swap(rand, top[1])
       self.pivot = top[1]
+      self.arr.updatestats("Pivot before random swap: {} Pivot after swap: {}".format(orig_pivot, self.arr.val(self.pivot)))
 
   def step(self):
     if self.partitioning:
@@ -840,6 +871,7 @@ class Quick_Sort_Rand(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True
@@ -858,7 +890,6 @@ class Radix_Sort(object):
     self.finished = False
     self.swapping = False
     self.arr.algo_name = 'Radix Sort'
-    self.arr.updatestats()
 
     self.digit_count = [0] * 10
     self.backing_arr = [0] * self.arr.size
@@ -866,7 +897,7 @@ class Radix_Sort(object):
     self.i = 0
     self.counting = True
     self.copying = False
-
+    self.arr.updatestats('Counting...')
   def count(self):
     digit = (self.arr.val(self.i) % self.digit_place) / (self.digit_place / 10)
     self.digit_count[digit] += 1
@@ -880,7 +911,10 @@ class Radix_Sort(object):
       self.copying = True
       for i in range(self.arr.size):
         self.backing_arr[i] = self.arr.val(i)
-
+      count_str = "Number of vals with x in {}'s digit: ".format(self.digit_place/10)
+      for x in range(len(self.digit_count)):
+        count_str += "[{}] {} ".format(x, self.digit_count[x])
+      self.arr.updatestats(count_str)
       for x in range(1, len(self.digit_count)):
         self.digit_count[x] += self.digit_count[x-1]
       for x in range(len(self.digit_count)):
@@ -909,6 +943,7 @@ class Radix_Sort(object):
         for i in range(len(self.digit_count)):
           self.digit_count[i] = 0
         self.counting = True
+        self.arr.updatestats("Counting...")
 
   def step(self):
     if self.counting:
@@ -920,6 +955,7 @@ class Radix_Sort(object):
       if not self.config.paused:
         self.config.last_inst = self.master.after(self.config.delay.get(), self.step)
     else:
+      self.arr.updatestats(' ')
       self.arr.clear_compared()
       self.arr.check_sorted()
       self.finished = True

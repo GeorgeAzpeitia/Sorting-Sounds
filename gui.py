@@ -128,8 +128,10 @@ class App(object):
     self.arr_radio_sorted.grid(row=1, column=0, sticky='w')
     self.arr_radio_almost = tk.Radiobutton(self.arr_sorting_ctl, text='Almost Sorted',variable=config.arr_sorting, value = 3)
     self.arr_radio_almost.grid(row=1, column=1, sticky='w')
+    self.arr_radio_all_rand = tk.Radiobutton(self.arr_sorting_ctl, text='Fully Random',variable=config.arr_sorting, value = 4)
+    self.arr_radio_all_rand.grid(row=2, column=0, sticky='w')
     self.arr_check_few_uniq = tk.Checkbutton(self.arr_sorting_ctl, text='Few Unique', variable=config.arr_few_unique)
-    self.arr_check_few_uniq.grid(row=2, column=0, sticky='w')
+    self.arr_check_few_uniq.grid(row=2, column=1, sticky='w')
 
     #Array Appearance Controls
     self.arr_appearance_ctl = tk.LabelFrame(self.arr_ctl, text='Appearance', padx=5)

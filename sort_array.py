@@ -2,7 +2,7 @@
 import random
 import math
 class Sort_Array(object):
-  
+
   """
   This is the backing array that holds the data to be sorted by the
   sorting algorithms in algos.py as a tuple of the value at that index
@@ -36,6 +36,7 @@ class Sort_Array(object):
     self.comparisons = 0
     self.swaps = 0
     self.algo_name = None
+    self.extra = ''
     self.statlabel = self.canvas.create_text(5, 0, anchor='nw', fill=self.color_scheme[-3])
 
     #Which mode to be display the data in, if both false then we use bars
@@ -72,12 +73,27 @@ class Sort_Array(object):
     if self.config.arr_few_unique.get():
       #array is to have few unique values
       uniq = 4
-      for i in range(1, uniq):
-        vals = vals + [int(i * (float(self.size - 1) / (uniq - 1)))] * (self.size // (uniq- 1))
-      vals = vals + [self.size - 1] * (self.size % (uniq- 1))
-      assert len(vals) == (self.size)
+      if self.config.arr_sorting.get() == 4:
+        #Array is also fully random
+        allowed_vals = []
+        for i in range(1, uniq):
+          allowed_vals.append(int(i * (float(self.size - 1) / (uniq - 1))))
+        for i in range(self.size):
+          x = random.randrange(0, len(allowed_vals))
+          vals.append(allowed_vals[x])
+        assert len(vals) == self.size
+      else:
+        for i in range(1, uniq):
+          vals = vals + [int(i * (float(self.size - 1) / (uniq - 1)))] * (self.size // (uniq- 1))
+        vals = vals + [self.size - 1] * (self.size % (uniq- 1))
+        assert len(vals) == self.size
     else:
-      vals = range(self.size)
+      if self.config.arr_sorting.get() == 4:
+        for i in range(self.size):
+          vals.append(random.randrange(self.size))
+        assert len(vals) == self.size
+      else:
+        vals = range(self.size)
 
     if self.config.arr_sorting.get() == 0:
       #array is randomized      
@@ -157,7 +173,9 @@ class Sort_Array(object):
     Updates the label containing all the stats for the array, takes an optional
     string parameter to display algorithm specific statistics.
     """
-    stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms\n{4}".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get(), extra)
+    if extra:
+      self.extra = extra
+    stats = "{0}:\nComparisons: {1}  Swaps: {2}  Delay: {3}ms\n{4}".format(self.algo_name, self.comparisons, self.swaps, self.config.delay.get(), self.extra)
     self.canvas.itemconfig(self.statlabel, text=stats)
     self.canvas.update_idletasks()
 

@@ -4,7 +4,7 @@ original Sound of Sorting at http://panthema.net/2013/sound-of-sorting/
 that this project was based on.
 The original source code for this sound module can be found at 
 http://panthema.net/2013/sound-of-sorting/sound-of-sorting-0.6.5/src/SortSound.cpp.html
-Credit goes to the original author, Tino Bingmann.
+Credit goes to the original author,  Tino Bingmann.
  * Copyright (C) 2013-2014 Timo Bingmann <tb@panthema.net>
  *
  * This program is free software: you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import numpy
 samplerate = 44100
 sound_on = False
 sound_sustain = 2.0
-max_oscillators = 512
+max_oscillators = 256
 
 class Oscillator(object):
   def __init__(self, freq, tstart, duration=44100/8):
