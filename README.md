@@ -7,7 +7,9 @@ Sorting Sounds is capable of real time animation of sorting algorithms. The user
 
 ### Prerequisities
 Python 2.7.6
+
 PyAudio
+
 ```
 pip install pyaudio
 ```
